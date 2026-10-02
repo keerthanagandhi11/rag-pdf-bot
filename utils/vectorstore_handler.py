@@ -1,11 +1,10 @@
 import os
 
-from utils.config import GOOGLE_API_KEY, MODEL_OPTIONS
+from utils.config import MODEL_OPTIONS
 from utils.pdf_handler import get_pdf_text, get_text_chunks
 
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 # Mapping each model provider to its corresponding persistent directory for storing vectorstore data
 PERSIST_DIR = {
@@ -17,21 +16,15 @@ def get_embeddings(model_provider):
   """
   Returns the appropriate embedding model based on the selected model provider.
 
-  - For 'groq', returns a HuggingFace MiniLM embedding model.
-  - For 'gemini', returns Google's Generative AI embedding model.
+  - For supported providers, returns a local HuggingFace MiniLM embedding model.
 
   Raises:
     ValueError: If the given provider is not supported.
   """
-  if model_provider == "groq":
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L12-v2")
-  elif model_provider == "gemini":
-    return GoogleGenerativeAIEmbeddings(
-      model="models/embedding-001",
-      google_api_key=GOOGLE_API_KEY
-    )
-  else:
+  if model_provider not in PERSIST_DIR:
     raise ValueError("Unsupported Model Provider")
+
+  return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L12-v2")
 
 
 def get_or_create_vectorstore(uploaded_files, model_provider):

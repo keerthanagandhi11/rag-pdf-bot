@@ -14,10 +14,10 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 MODEL_OPTIONS = {
   "Groq": {
     "playground": "https://console.groq.com/",
-    "models": ["llama-3.1-8b-instant", "llama3-70b-8192"]
+    "models": ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
   },
   "Gemini": {
     "playground": "https://ai.google.dev",
-    "models": ["gemini-2.0-flash", "gemini-2.5-flash"]
+    "models": ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
   }
 }

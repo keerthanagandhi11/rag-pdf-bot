@@ -1,6 +1,6 @@
 from pypdf import PdfReader
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def get_pdf_text(uploaded_files):

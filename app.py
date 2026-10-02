@@ -1,5 +1,6 @@
 import streamlit as st
 
+from utils.config import GROQ_API_KEY, MODEL_OPTIONS
 from utils.chat_handler import (
   setup_session_state,
   render_chat_history,
@@ -67,7 +68,21 @@ def main():
 
   # Show chat input box and process question with selected LLM
   if st.session_state.get("vector_store"):
-    handle_user_input(model_provider, model, get_llm_chain(model_provider, model, st.session_state.get("vector_store")))
+    vector_store = st.session_state.get("vector_store")
+    chain = get_llm_chain(model_provider, model, vector_store)
+    fallback_model = None
+    fallback_chain = None
+    if model_provider == "gemini" and GROQ_API_KEY:
+      fallback_model = MODEL_OPTIONS["Groq"]["models"][0]
+      fallback_chain = get_llm_chain("groq", fallback_model, vector_store)
+
+    handle_user_input(
+      model_provider,
+      model,
+      chain,
+      fallback_chain=fallback_chain,
+      fallback_model=fallback_model
+    )
 
   # Developer mode: inspect Chroma vectorstore
   if st.session_state.vector_store:

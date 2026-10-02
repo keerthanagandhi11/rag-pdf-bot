@@ -44,7 +44,7 @@ def render_chat_history():
     with st.chat_message("ai"):
       st.markdown(a)
 
-def handle_user_input(model_provider, model, chain):
+def handle_user_input(model_provider, model, chain, fallback_chain=None, fallback_model=None):
   """
   Handles user input from the chat input box. 
   Invokes the LLM chain using the provided question and displays the result.
@@ -73,13 +73,29 @@ def handle_user_input(model_provider, model, chain):
     st.markdown(question)
   with st.chat_message("ai"):
     with st.spinner("Thinking..."):
+      active_provider = model_provider
+      active_model = model
       try:
         output = chain.invoke({"input": question})["answer"]
-        st.markdown(output)
-        pdf_names = [f.name for f in st.session_state.get("pdf_files")]
-        st.session_state.chat_history.append((question, output, model_provider, model, pdf_names, datetime.now()))
       except Exception as e:
-        st.error(f"Error: {str(e)}")
+        error_message = str(e).lower()
+        quota_exceeded = "429" in error_message and "quota" in error_message
+        if model_provider != "gemini" or fallback_chain is None or not quota_exceeded:
+          st.error(f"Error: {str(e)}")
+          return
+
+        st.warning(f"Gemini quota reached. Retrying with Groq ({fallback_model}).")
+        try:
+          output = fallback_chain.invoke({"input": question})["answer"]
+          active_provider = "groq"
+          active_model = fallback_model
+        except Exception as fallback_error:
+          st.error(f"Groq fallback failed: {str(fallback_error)}")
+          return
+
+      st.markdown(output)
+      pdf_names = [f.name for f in st.session_state.get("pdf_files")]
+      st.session_state.chat_history.append((question, output, active_provider, active_model, pdf_names, datetime.now()))
 
 def render_uploaded_files_expander():
   """
